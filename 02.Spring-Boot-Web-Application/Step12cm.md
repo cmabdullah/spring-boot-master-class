@@ -68,11 +68,14 @@ public class LoginController {
 ```java
 package com.cmabdullah.springBoot20.controller;
 
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
 
 import com.cmabdullah.springBoot20.service.TodoService;
@@ -95,6 +98,12 @@ public class TodoController {
 	//@ResponseBody
 	public String addTodo(ModelMap model) {
 		return "todo";
+	}
+	
+	@RequestMapping(value="/add-todo", method = RequestMethod.POST)
+	public String addTodo(ModelMap model, @RequestParam String desc){
+		todoService.addTodo((String) model.get("name"), desc, new Date(), false);
+		return "redirect:/list-todos";
 	}
 
 }
@@ -364,7 +373,9 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 
 <body>
 
-	<form method="post">Description : <input name="desc" type="text"/>   </form>
+	<form method="post">Description : <input name="desc" type="text"/> 
+	
+	<input type="submit"/>  </form>
 	
 	
 </body>
