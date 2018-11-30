@@ -8,7 +8,8 @@ ModelMap model
 model.put("name", name);
 My First JSP!!! My name is ${name}
 ```
-
+# url with parameter
+> http://localhost:8080/login?name=cmabdullah
 ## Files List
 
 ### pom.xml
