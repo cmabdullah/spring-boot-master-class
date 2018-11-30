@@ -1,10 +1,5 @@
-# Goal -> Display Todos in a table using JSTL Tags
+# Goal -> Session vs Model vs Request - SessionAttributes and Add new todo
 
-
-			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>jstl</artifactId>
-			</dependency>
 
 Snippet -   com.cmabdullah.springBoot20
 
@@ -111,7 +106,9 @@ public class TodoController {
 		todoService.addTodo((String) model.get("name"), desc, new Date(), false);
 		return "redirect:/list-todos";
 	}
+
 }
+
 ```
 #
 ```java
@@ -351,35 +348,20 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 ```
 # list-todos.jsp
 ```java
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <html>
+
 <head>
-<title>todo's for ${name}</title>
+<title>First Web Application</title>
 </head>
+
 <body>
-	<h1>Your Todos</h1>
-	<table>
-		<caption>Your todos</caption>
-		<thead>
-			<tr>
-				<th>Description</th>
-				<th>Target Date</th>
-				<th>Is it Done?</th>
-			</tr>
-		</thead>
-		<tbody>
-			<c:forEach items="${todos }" var="todo">
-				<tr>
-					<td>${todo.desc}</td>
-					<td>${todo.targetDate}</td>
-					<td>${todo.done}</td>
-				</tr>
-			</c:forEach>
-		</tbody>
-	</table>
-	<!-- ${todos} -->
+	<h1>here are the list of name ${name}'s todos </h1>
+	${todos}
+	
+	
 	<a href="add-todo">Add todo</a>
 </body>
+
 </html>
 ```
 # todo.jsp
@@ -401,4 +383,3 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 
 </html>
 ```
-
