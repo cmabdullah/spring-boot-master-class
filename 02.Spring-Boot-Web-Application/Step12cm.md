@@ -73,9 +73,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttributes;
 
 import com.cmabdullah.springBoot20.service.TodoService;
 @Controller
+@SessionAttributes("name")
 public class TodoController {
 	
 	@Autowired
@@ -83,11 +85,17 @@ public class TodoController {
 	
 	@RequestMapping(value = "/list-todos", method = RequestMethod.GET)
     //@ResponseBody
-    public String showLoginPage(ModelMap model) {
+    public String showTodo(ModelMap model) {
 		String name = (String) model.get("name");
+		System.out.println(name);
 		model.put("todos", todoService.retrieveTodos(name));
     	return "list-todos";
     }
+	@RequestMapping(value = "/add-todo", method = RequestMethod.GET)
+	//@ResponseBody
+	public String addTodo(ModelMap model) {
+		return "todo";
+	}
 
 }
 
@@ -241,9 +249,9 @@ public class TodoService {
 	private static int todoCount = 3;
 
 	static {
-		todos.add(new Todo(1, "in28Minutes", "Learn Spring MVC", new Date(), false));
-		todos.add(new Todo(2, "in28Minutes", "Learn Struts", new Date(), false));
-		todos.add(new Todo(3, "in28Minutes", "Learn Hibernate", new Date(), false));
+		todos.add(new Todo(1, "cmaa", "Learn Spring MVC", new Date(), false));
+		todos.add(new Todo(2, "cmaa", "Learn Struts", new Date(), false));
+		todos.add(new Todo(3, "cmaa", "Learn Hibernate", new Date(), false));
 	}
 
 	public List<Todo> retrieveTodos(String user) {
@@ -337,14 +345,29 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 </head>
 
 <body>
-	<h1>list of todos</h1>
+	<h1>here are the list of name ${name}'s todos </h1>
 	${todos}
-	<br>
-	your name is : ${name}
+	
+	
+	<a href="add-todo">Add todo</a>
 </body>
 
 </html>
 ```
-#
+# todo.jsp
 ```java
+<html>
+
+<head>
+<title>First Web Application</title>
+</head>
+
+<body>
+
+	<form method="post">Description : <input name="desc" type="text"/>   </form>
+	
+	
+</body>
+
+</html>
 ```
