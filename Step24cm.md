@@ -1,4 +1,4 @@
-# Goal ->  Initial Spring Security Setup
+# Goal ->  Refactor and add Logout Functionality using Spring Security
 
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
@@ -30,10 +30,12 @@ public class SpringBoot20Application {
 
 Snippet -  com.cmabdullah.springBoot20.controller
 
-# LoginController.java
+# WelcomeController.java
 ```java
 package com.cmabdullah.springBoot20.controller;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,15 +44,26 @@ import org.springframework.web.bind.annotation.SessionAttributes;
 
 @Controller
 @SessionAttributes("name")
-public class LoginController {
+public class WelcomeController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     //@ResponseBody
-    public String showLoginPage(ModelMap model) {
-    	model.put("name", "cmaa");
+    public String showWelcomePage(ModelMap model) {
+    	model.put("name", getLoggedInUserName());
     	return "welcome";
     }
+    
+    private String getLoggedInUserName() {
+		Object principal = SecurityContextHolder.getContext()
+				.getAuthentication().getPrincipal();
+
+		if (principal instanceof UserDetails)
+			return ((UserDetails) principal).getUsername();
+
+		return principal.toString();
+	}
 }
+
 ```
 
 # TodoController.java
@@ -64,6 +77,8 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
@@ -72,12 +87,11 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttributes;
 
 import com.cmabdullah.springBoot20.model.Todo;
 import com.cmabdullah.springBoot20.service.TodoService;
 @Controller
-@SessionAttributes("name")
+//@SessionAttributes("name")
 public class TodoController {
 	
 	@Autowired
@@ -101,7 +115,13 @@ public class TodoController {
     }
 
 	private String getLoggedInUserName(ModelMap model) {
-		return (String) model.get("name");
+		Object principal = SecurityContextHolder.getContext()
+				.getAuthentication().getPrincipal();
+
+		if (principal instanceof UserDetails)
+			return ((UserDetails) principal).getUsername();
+
+		return principal.toString();
 	}
 	
 	@RequestMapping(value = "/add-todo", method = RequestMethod.GET)
@@ -144,14 +164,47 @@ public class TodoController {
 		}
 
 		todo.setUser(getLoggedInUserName(model));
-		
+
 		todoService.updateTodo(todo);
+
 		return "redirect:/list-todos";
 	}
+
 }
+
 ```
-#
+
+# LogoutController.java
 ```java
+package com.cmabdullah.springBoot20.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+@Controller
+@SessionAttributes("name")
+public class LogoutController {
+
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    //@ResponseBody
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+    	Authentication authentication = SecurityContextHolder.getContext()
+				.getAuthentication();
+    	if(authentication != null) {
+    		new SecurityContextLogoutHandler().logout(request, response, authentication);
+    	}
+    	return "redirect:/";
+    }
+}
+
 ```
 
 
@@ -432,6 +485,10 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp/common/
 			<li class="active"><a href="/">Home</a></li>
 			<li><a href="/list-todos">Todos</a></li>
 
+		</ul>
+		
+		<ul class="nav navbar-nav navbar-right">
+			<li><a href="/logout">Logout</a></li>
 		</ul>
 	</div>
 </nav>
