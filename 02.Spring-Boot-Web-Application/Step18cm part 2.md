@@ -1,4 +1,4 @@
-# Goal ->  Step 19 Updating a todo
+# Goal ->  Using JSR 349 Validations
 
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
@@ -132,29 +132,6 @@ public class TodoController {
 		}
 		
 		todoService.addTodo((String) model.get("name"), todo.getDesc(), new Date(), false);
-		return "redirect:/list-todos";
-	}
-	
-	
-	@RequestMapping(value = "/update-todo", method = RequestMethod.GET)
-	public String showUpdateTodoPage(@RequestParam int id, ModelMap model) {
-		Todo todo = todoService.retrieveTodo(id);
-		model.put("todo", todo);
-		return "todo";
-	}
-
-	@RequestMapping(value = "/update-todo", method = RequestMethod.POST)
-	public String updateTodo(ModelMap model, @Valid Todo todo,
-			BindingResult result) {
-
-		if (result.hasErrors()) {
-			return "todo";
-		}
-
-		todo.setUser((String) model.get("name"));
-
-		todoService.updateTodo(todo);
-
 		return "redirect:/list-todos";
 	}
 
@@ -348,20 +325,6 @@ public class TodoService {
 			}
 		}
 	}
-	
-	public Todo retrieveTodo(int id) {
-        for (Todo todo : todos) {
-            if (todo.getId()==id) {
-                return todo;
-            }
-        }
-        return null;
-    }
-
-    public void updateTodo(Todo todo){
-    		todos.remove(todo);
-    		todos.add(todo);
-    }
 }
 ```
 #
@@ -442,7 +405,6 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 					<th>Description</th>
 					<th>Target Date</th>
 					<th>Is it Done?</th>
-					<th>Update</th>
 					<th>Delete</th>
 				</tr>
 			</thead>
@@ -452,8 +414,6 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 						<td>${todo.desc}</td>
 						<td>${todo.targetDate}</td>
 						<td>${todo.done}</td>
-						<td><a type="button" class="btn btn-success"
-							href="/update-todo?id=${todo.id}">Update</a></td>
 						<td><a type="button" class="btn btn-warning"
 							href="/delete-todo?id=${todo.id}">Delete</a></td>
 					</tr>

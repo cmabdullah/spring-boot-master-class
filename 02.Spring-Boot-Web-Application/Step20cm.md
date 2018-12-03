@@ -1,18 +1,13 @@
-# Goal ->  Step 19 Updating a todo
+# Goal ->  add a Target Date for Todo - Use initBinder to Handle Date Fields
 
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
 
-			<dependency>
-				<groupId>org.webjars</groupId>
-				<artifactId>bootstrap</artifactId>
-				<version>3.3.6</version>
-			</dependency>
-			<dependency>
-				<groupId>org.webjars</groupId>
-				<artifactId>jquery</artifactId>
-				<version>1.9.1</version>
-			</dependency>
+	<dependency>
+		<groupId>org.webjars</groupId>
+		<artifactId>bootstrap-datepicker</artifactId>
+		<version>1.0.1</version>
+	</dependency>
 
 Snippet -   com.cmabdullah.springBoot20
 
@@ -82,14 +77,18 @@ public class LoginController {
 ```java
 package com.cmabdullah.springBoot20.controller;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -103,6 +102,14 @@ public class TodoController {
 	
 	@Autowired
 	TodoService todoService;
+	
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		// Date - dd/MM/yyyy
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		binder.registerCustomEditor(Date.class, new CustomDateEditor(
+				dateFormat, false));
+	}
 	
 	@RequestMapping(value = "/list-todos", method = RequestMethod.GET)
     //@ResponseBody
@@ -131,7 +138,7 @@ public class TodoController {
 			return "todo";
 		}
 		
-		todoService.addTodo((String) model.get("name"), todo.getDesc(), new Date(), false);
+		todoService.addTodo((String) model.get("name"), todo.getDesc(), todo.getTargetDate(), false);
 		return "redirect:/list-todos";
 	}
 	
@@ -424,6 +431,7 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 # list-todos.jsp
 ```java
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <html>
 
 <head>
@@ -450,7 +458,7 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 				<c:forEach items="${todos }" var="todo">
 					<tr>
 						<td>${todo.desc}</td>
-						<td>${todo.targetDate}</td>
+						<td><fmt:formatDate value="${todo.targetDate}" pattern="dd/MM/yyyy"/></td>
 						<td>${todo.done}</td>
 						<td><a type="button" class="btn btn-success"
 							href="/update-todo?id=${todo.id}">Update</a></td>
@@ -487,11 +495,19 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 <body>
 	<div class="container">
 		<form:form method="post" modelAttribute="todo">
+			<form:hidden path="id" />
 			<fieldset class="form-group">
-				<form:label path="desc">Description</form:label> 
-				<form:input name="desc" path="desc" type="text"
-					class="form-control" required="required"/>
-					<form:errors path="desc" cssClass="text-warning"/>
+				<form:label path="desc">Description</form:label>
+				<form:input name="desc" path="desc" type="text" class="form-control"
+					required="required" />
+				<form:errors path="desc" cssClass="text-warning" />
+			</fieldset>
+
+			<fieldset class="form-group">
+				<form:label path="targetDate">Target Date</form:label>
+				<form:input path="targetDate" type="text" class="form-control"
+					required="required" />
+				<form:errors path="targetDate" cssClass="text-warning" />
 			</fieldset>
 
 			<button type="submit" class="btn btn-success">Add</button>
@@ -500,8 +516,14 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 
 	<script src="webjars/jquery/1.9.1/jquery.min.js"></script>
 	<script src="webjars/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script
+		src="webjars/bootstrap-datepicker/1.0.1/js/bootstrap-datepicker.js"></script>
 
 </body>
-
+	<script>
+		$('#targetDate').datepicker({
+			format : 'dd/mm/yyyy'
+		});
+	</script>
 </html>
 ```
