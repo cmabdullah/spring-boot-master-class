@@ -1,13 +1,13 @@
-# Goal ->  Preparing for Spring Security.
+# Goal ->  Initial Spring Security Setup
 
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
+> https://www.baeldung.com/spring-security-5-default-password-encoder
 
-	<dependency>
-		<groupId>org.webjars</groupId>
-		<artifactId>bootstrap-datepicker</artifactId>
-		<version>1.0.1</version>
-	</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
 
 Snippet -   com.cmabdullah.springBoot20
 
@@ -338,8 +338,47 @@ public class TodoService {
     }
 }
 ```
-#
+
+Snippet -  com.cmabdullah.springBoot20.security
+
+# SecurityConfiguration.java
 ```java
+package com.cmabdullah.springBoot20.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+	//Create User - in28Minutes/dummy
+	@Autowired
+    public void configureGlobalSecurity(AuthenticationManagerBuilder auth)
+            throws Exception {
+		
+		
+		PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        auth.inMemoryAuthentication()
+        .withUser("cmaa")
+        .password(encoder.encode("1234"))
+        .roles("USER", "ADMIN");
+    }
+	
+	@Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.authorizeRequests()
+        .antMatchers("/login")
+        .permitAll()
+        .antMatchers("/", "/*todo*/**")
+        .access("hasRole('USER')")
+        .and()
+        .formLogin();
+    }
+}
 ```
 
 
