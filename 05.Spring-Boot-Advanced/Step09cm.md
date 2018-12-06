@@ -1,4 +1,10 @@
-# Goal -> Creating REST Service with GetMapping and PathVariable (SurvayController)
+# Goal -> Step 09 Spring Boot Developer Tools and LiveReload  Develop faster
+### this dependency seems not been working well[dont know is it doing well or not] 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
 
 # Application
 ```java

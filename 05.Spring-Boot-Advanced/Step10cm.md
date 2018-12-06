@@ -1,4 +1,10 @@
-# Goal -> Creating REST Service with GetMapping and PathVariable (SurvayController)
+# Goal -> Step 10 Create a Service to add a new question to survey PostMapping Postman
+### this dependency seems not been working well[dont know is it doing well or not] 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
 
 # Application
 ```java
@@ -299,40 +305,64 @@ public class WelcomeController {
 ```java
 package com.abdullah.khan.firstApplicationRestL50.controller;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.abdullah.khan.firstApplicationRestL50.model.Question;
 import com.abdullah.khan.firstApplicationRestL50.service.SurveyService;
 
 @RestController
 public class SurvayController {
-	
+
 	@Autowired
-	SurveyService serveyService ; 
-	
-	//http://localhost:8080/surveys/Survey1/questions
+	SurveyService serveyService;
+
+	// http://localhost:8080/surveys/Survey1/questions
 	@GetMapping("/surveys/{surveyId}/questions")
-	public List<Question> retriveQuestionForSurvey(@PathVariable String surveyId){
-		
-		
+	public List<Question> retriveQuestionForSurvey(@PathVariable String surveyId) {
+
 		List<Question> myList = serveyService.retrieveQuestions(surveyId);
-		
+
 		for (Question question : myList) {
 			System.out.println(question);
 		}
-		
-		
+
 		return serveyService.retrieveQuestions(surveyId);
 	}
-	
+
 	@GetMapping("/surveys/{surveyId}/questions/{questionId}")
-	public Question retriveDataildForQuestion(@PathVariable String surveyId, @PathVariable String questionId){
+	public Question retriveDataildForQuestion(@PathVariable String surveyId, @PathVariable String questionId) {
 		return serveyService.retrieveQuestion(surveyId, questionId);
+	}
+
+	//post Mapping
+	// /surveys/{surveyId}/questions
+	@PostMapping("/surveys/{surveyId}/questions")
+	public ResponseEntity<Void> addQuestionToSurvey(@PathVariable String surveyId, @RequestBody Question newQuestion) {
+
+		Question question = serveyService.addQuestion(surveyId, newQuestion);
+
+		if (question == null)
+			return ResponseEntity.noContent().build();
+
+		// Success - URI of the new resource in Response Header
+		// Status - created
+		// URI -> /surveys/{surveyId}/questions/{questionId}
+		// question.getQuestionId()
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(question.getId())
+				.toUri();
+
+		// Status
+		return ResponseEntity.created(location).build();
 	}
 }
 
@@ -373,6 +403,15 @@ public class SurvayController {
 }
 ```
 
+# Post json data through postman
+### http://localhost:8080/surveys/Survey1/questions
+```js
+{
+	"description": "Second Most Populous Country in the World",
+	"correctAnswer": "India",
+	"options": ["India", "Russia", "United States", "China"]
+}
+```
 
 
 
