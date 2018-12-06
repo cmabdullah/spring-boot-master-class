@@ -1,4 +1,4 @@
-# Goal -> Step 07 Theory - Message Converters and Introduction to REST
+# Goal -> Step 08 Second REST Service to retrieve a specific question
 
 # Application
 ```java
@@ -318,16 +318,22 @@ public class SurvayController {
 	//http://localhost:8080/surveys/Survey1/questions
 	@GetMapping("/surveys/{surveyId}/questions")
 	public List<Question> retriveQuestionForSurvey(@PathVariable String surveyId){
-
+		
+		
 		List<Question> myList = serveyService.retrieveQuestions(surveyId);
-		//Question [id=Question4, description=Second largest english speaking country, correctAnswer=India, options=[India, Russia, United States, China]]
+		
 		for (Question question : myList) {
 			System.out.println(question);
 		}
-
+		
+		
 		return serveyService.retrieveQuestions(surveyId);
 	}
-
+	
+	@GetMapping("/surveys/{surveyId}/questions/{questionId}")
+	public Question retriveDataildForQuestion(@PathVariable String surveyId, @PathVariable String questionId){
+		return serveyService.retrieveQuestion(surveyId, questionId);
+	}
 }
 
 ```
@@ -355,6 +361,18 @@ public class SurvayController {
 	"options": ["India", "Russia", "United States", "China"]
 }]
 ```
+
+
+### http://localhost:8080/surveys/Survey1/questions/Question1
+```js
+{
+	"id": "Question1",
+	"description": "Largest Country in the World",
+	"correctAnswer": "Russia",
+	"options": ["India", "Russia", "United States", "China"]
+}
+```
+
 
 
 
