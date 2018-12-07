@@ -1,14 +1,19 @@
-# Goal -> Step 18 Spring Boot Starter  Spring Data JPA with CommandLineRunner(part 1 & 2)
+# Goal -> Step 19 In Memory Database H2 Console and add a new JPA Repository Method
  
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
+## What You Will Learn during this Step:
+- Look at H2 Console : http://localhost:8080/h2-console
+ - Use db url jdbc:h2:mem:testdb
+- Add findByRole method 
 
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-        </dependency>
+## Some Notes
+- Useful Properties
+ - spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+ - spring.datasource.url=jdbc:mysql://localhost:3306/test 
+ - spring.datasource.username=root
+ - spring.datasource.password=admin
+ - spring.datasource.initialize=true 
+ - spring.jpa.hibernate.ddl-auto=update
+ - spring.jpa.show-sql=true
 
 # package com.abdullah.khan.firstApplicationRestL50;
 # Application
@@ -500,10 +505,12 @@ public class User {
 ```java
 package com.abdullah.khan.firstApplicationRestL50.jpa;
 
+import java.util.List;
+
 import org.springframework.data.repository.CrudRepository;
 
 public interface UserRepository extends CrudRepository<User, Long> {
-
+	List<User> findByRole(String role);
 }
 ```
 ### UserCommandLineRunner
@@ -539,10 +546,15 @@ public class UserCommandLineRunner implements CommandLineRunner {
             log.info(user.toString());
         }
         
+        log.info("-------------------------------");
+        log.info("Finding all Admins");
+        log.info("-------------------------------");
+        for (User admin : repository.findByRole("Admin")) {
+            log.info(admin.toString());
+            // Do something...
+        }   
     }
-
 }
-
 ```
 ### 
 ```java
