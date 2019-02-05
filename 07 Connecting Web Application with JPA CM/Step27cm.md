@@ -1,4 +1,4 @@
-# Goal ->  Exception Handling
+# Goal ->  098 Step 27 Configuring H2 Console
 # project name springBoot2-0
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
@@ -7,6 +7,17 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 Snippet -   com.cmabdullah.springBoot20
@@ -460,14 +471,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 	@Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-        .antMatchers("/login")
+        .antMatchers("/login", "/h2-console/**")
         .permitAll()
         .antMatchers("/", "/*todo*/**")
         .access("hasRole('USER')")
         .and()
         .formLogin();
+        
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
     }
 }
+
+
 ```
 
 
@@ -476,9 +492,12 @@ Snippet -  /springBoot2-0/src/main/resources
 
 # application.properties
 ```properties
-    logging.level.org.springframework.web: DEBUG
-    spring.mvc.view.prefix: /WEB-INF/jsp/
-    spring.mvc.view.suffix: .jsp
+	logging.level.org.springframework.web: INFO
+
+	spring.mvc.view.prefix: /WEB-INF/jsp/
+	spring.mvc.view.suffix: .jsp
+	spring.jpa.show-sql=true
+	spring.h2.console.enabled=true
 ```
 #
 ```java

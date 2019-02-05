@@ -1,4 +1,4 @@
-# Goal ->  Exception Handling
+# Goal ->  097 Step 26 Adding Dependencies for JPA and H2
 # project name springBoot2-0
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
@@ -7,6 +7,17 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 Snippet -   com.cmabdullah.springBoot20

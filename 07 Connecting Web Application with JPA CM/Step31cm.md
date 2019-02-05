@@ -1,4 +1,4 @@
-# Goal ->  Exception Handling
+# Goal ->  102 Step 31 Data initialization with data.sql
 # project name springBoot2-0
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
@@ -7,6 +7,17 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 Snippet -   com.cmabdullah.springBoot20
@@ -72,6 +83,7 @@ package com.cmabdullah.springBoot20.controller;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -89,6 +101,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.cmabdullah.springBoot20.model.Todo;
+import com.cmabdullah.springBoot20.service.TodoRepository;
 import com.cmabdullah.springBoot20.service.TodoService;
 @Controller
 //@SessionAttributes("name")
@@ -97,6 +110,8 @@ public class TodoController {
 	@Autowired
 	TodoService todoService;
 	
+	@Autowired
+	TodoRepository repository;
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		// Date - dd/MM/yyyy
@@ -110,7 +125,8 @@ public class TodoController {
     public String showTodo(ModelMap model) {
 		String name = getLoggedInUserName(model);
 		System.out.println(name);
-		model.put("todos", todoService.retrieveTodos(name));
+		model.put("todos", repository.findByUser(name));
+//		model.put("todos", todoService.retrieveTodos(name));
     	return "list-todos";
     }
 
@@ -134,9 +150,12 @@ public class TodoController {
 	@RequestMapping(value="/delete-todo", method = RequestMethod.GET)
 	public String deleteTodo(@RequestParam int id){
 		//exception handle
-		if(id==1)
-			throw new RuntimeException("Something went wrong");
-		todoService.deleteTodo(id);
+//		if(id==1)
+//			throw new RuntimeException("Something went wrong");
+		
+		repository.deleteById(id);
+		//in mamory database
+		//todoService.deleteTodo(id);
 		return "redirect:/list-todos";
 	}
 	
@@ -146,14 +165,21 @@ public class TodoController {
 			return "todo";
 		}
 		
-		todoService.addTodo(getLoggedInUserName(model), todo.getDesc(), todo.getTargetDate(), false);
+		
+		//save databases
+		todo.setUser(getLoggedInUserName(model));
+		repository.save(todo);
+		
+		//in memory databases
+		//todoService.addTodo(getLoggedInUserName(model), todo.getDesc(), todo.getTargetDate(), false);
 		return "redirect:/list-todos";
 	}
 	
 	
 	@RequestMapping(value = "/update-todo", method = RequestMethod.GET)
 	public String showUpdateTodoPage(@RequestParam int id, ModelMap model) {
-		Todo todo = todoService.retrieveTodo(id);
+		Optional<Todo> todo = repository.findById(id);
+		//Todo todo = todoService.retrieveTodo(id);
 		model.put("todo", todo);
 		return "todo";
 	}
@@ -168,7 +194,9 @@ public class TodoController {
 
 		todo.setUser(getLoggedInUserName(model));
 
-		todoService.updateTodo(todo);
+		//real orm 
+		repository.save(todo);
+//		todoService.updateTodo(todo);
 
 		return "redirect:/list-todos";
 	}
@@ -427,7 +455,23 @@ public class TodoService {
     }
 }
 ```
+Snippet -  com.cmabdullah.springBoot20.service
 
+# TodoRepository.java
+```java
+package com.cmabdullah.springBoot20.service;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.cmabdullah.springBoot20.model.Todo;
+
+public interface TodoRepository extends JpaRepository<Todo, Integer>{
+	List<Todo> findByUser(String user);
+}
+
+```
 Snippet -  com.cmabdullah.springBoot20.security
 
 # SecurityConfiguration.java
@@ -460,25 +504,47 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 	@Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-        .antMatchers("/login")
+        .antMatchers("/login", "/h2-console/**")
         .permitAll()
         .antMatchers("/", "/*todo*/**")
         .access("hasRole('USER')")
         .and()
         .formLogin();
+        
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
     }
 }
+
+
 ```
 
+Snippet -  /springBoot2-0/src/main/java
 
+# data.sql
+```sql
+insert into todo
+values (10001, 'lets learn coding', false, sysdate(), 'cmaa');
+insert into todo
+values (10002, 'lets learn JAVA', false, sysdate(), 'cmaa');
+insert into todo
+values (10003, 'lets learn JS', false, sysdate(), 'cmaa');
+insert into todo
+values (10004, 'lets learn Spring', false, sysdate(), 'cmaa');
+
+
+```
 
 Snippet -  /springBoot2-0/src/main/resources
 
 # application.properties
 ```properties
-    logging.level.org.springframework.web: DEBUG
-    spring.mvc.view.prefix: /WEB-INF/jsp/
-    spring.mvc.view.suffix: .jsp
+	logging.level.org.springframework.web: INFO
+
+	spring.mvc.view.prefix: /WEB-INF/jsp/
+	spring.mvc.view.suffix: .jsp
+	spring.jpa.show-sql=true
+	spring.h2.console.enabled=true
 ```
 #
 ```java
@@ -605,7 +671,6 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 				</c:forEach>
 			</tbody>
 		</table>
-		
 		<div>
 			<a class="button" href="/add-todo">Add a Todo</a>
 		</div>
@@ -625,14 +690,12 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 					required="required" />
 				<form:errors path="desc" cssClass="text-warning" />
 			</fieldset>
-
 			<fieldset class="form-group">
 				<form:label path="targetDate">Target Date</form:label>
 				<form:input path="targetDate" type="text" class="form-control"
 					required="required" />
 				<form:errors path="targetDate" cssClass="text-warning" />
 			</fieldset>
-
 			<button type="submit" class="btn btn-success">Add</button>
 		</form:form>
 </div>

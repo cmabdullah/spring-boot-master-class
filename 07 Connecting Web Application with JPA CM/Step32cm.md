@@ -1,7 +1,7 @@
-# Goal ->  Exception Handling
+# Goal ->  103 Step 32 Connecting JPA to other databases
 # project name springBoot2-0
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
-
+> https://stackoverflow.com/questions/32968527/hibernate-sequence-doesnt-exist
 > https://www.baeldung.com/spring-security-5-default-password-encoder
 
 		<dependency>
@@ -9,7 +9,35 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-Snippet -   com.cmabdullah.springBoot20
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+    		<groupId>mysql</groupId>
+    		<artifactId>mysql-connector-java</artifactId>
+		</dependency>
+
+
+		Configure application.properties
+		spring.jpa.hibernate.ddl-auto=none
+		spring.datasource.url=jdbc:mysql://localhost:3306/todo_example?useSSL=false
+		spring.datasource.username=todouser
+		spring.datasource.password=YOUR_PASSWORD
+		Snippet -   com.cmabdullah.springBoot20
+
+
+# Table 
+
+		create table todo 
+		(id integer not null, 
+		desc varchar(255), 
+		is_done boolean not null, 
+		target_date timestamp, 
+		user varchar(255), 
+		primary key (id));
+
 
 # SpringBoot20Application.java
 ```java
@@ -68,10 +96,16 @@ public class WelcomeController {
 
 # TodoController.java
 ```java
+
+```
+
+# LogoutController.java
+```java
 package com.cmabdullah.springBoot20.controller;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -89,14 +123,17 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.cmabdullah.springBoot20.model.Todo;
+import com.cmabdullah.springBoot20.service.TodoRepository;
 import com.cmabdullah.springBoot20.service.TodoService;
 @Controller
 //@SessionAttributes("name")
 public class TodoController {
 	
-	@Autowired
-	TodoService todoService;
+//	@Autowired
+//	TodoService todoService;
 	
+	@Autowired
+	TodoRepository repository;
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		// Date - dd/MM/yyyy
@@ -110,7 +147,8 @@ public class TodoController {
     public String showTodo(ModelMap model) {
 		String name = getLoggedInUserName(model);
 		System.out.println(name);
-		model.put("todos", todoService.retrieveTodos(name));
+		model.put("todos", repository.findByUser(name));
+//		model.put("todos", todoService.retrieveTodos(name));
     	return "list-todos";
     }
 
@@ -134,9 +172,12 @@ public class TodoController {
 	@RequestMapping(value="/delete-todo", method = RequestMethod.GET)
 	public String deleteTodo(@RequestParam int id){
 		//exception handle
-		if(id==1)
-			throw new RuntimeException("Something went wrong");
-		todoService.deleteTodo(id);
+//		if(id==1)
+//			throw new RuntimeException("Something went wrong");
+		
+		repository.deleteById(id);
+		//in mamory database
+		//todoService.deleteTodo(id);
 		return "redirect:/list-todos";
 	}
 	
@@ -146,14 +187,22 @@ public class TodoController {
 			return "todo";
 		}
 		
-		todoService.addTodo(getLoggedInUserName(model), todo.getDesc(), todo.getTargetDate(), false);
+		
+		//save databases
+		todo.setUser(getLoggedInUserName(model));
+		todo.setId((int)Math.random());
+		repository.save(todo);
+		
+		//in memory databases
+		//todoService.addTodo(getLoggedInUserName(model), todo.getDesc(), todo.getTargetDate(), false);
 		return "redirect:/list-todos";
 	}
 	
 	
 	@RequestMapping(value = "/update-todo", method = RequestMethod.GET)
 	public String showUpdateTodoPage(@RequestParam int id, ModelMap model) {
-		Todo todo = todoService.retrieveTodo(id);
+		Optional<Todo> todo = repository.findById(id);
+		//Todo todo = todoService.retrieveTodo(id);
 		model.put("todo", todo);
 		return "todo";
 	}
@@ -168,44 +217,13 @@ public class TodoController {
 
 		todo.setUser(getLoggedInUserName(model));
 
-		todoService.updateTodo(todo);
+		//real orm 
+		repository.save(todo);
+//		todoService.updateTodo(todo);
 
 		return "redirect:/list-todos";
 	}
 
-}
-
-```
-
-# LogoutController.java
-```java
-package com.cmabdullah.springBoot20.controller;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.SessionAttributes;
-
-@Controller
-@SessionAttributes("name")
-public class LogoutController {
-
-    @RequestMapping(value = "/logout", method = RequestMethod.GET)
-    //@ResponseBody
-    public String logout(HttpServletRequest request, HttpServletResponse response) {
-    	Authentication authentication = SecurityContextHolder.getContext()
-				.getAuthentication();
-    	if(authentication != null) {
-    		new SecurityContextLogoutHandler().logout(request, response, authentication);
-    	}
-    	return "redirect:/";
-    }
 }
 
 ```
@@ -252,13 +270,18 @@ package com.cmabdullah.springBoot20.model;
 
 import java.util.Date;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.Size;
-
+@Entity
 public class Todo {
+	@Id
+	@GeneratedValue
 	private int id;
 	private String user;
 	@Size(min=10, message="Enter at least 10 Characters...")
-	private String desc;
+	private String description;
 	private Date targetDate;
 	private boolean isDone;
 	
@@ -269,11 +292,11 @@ public class Todo {
 		// TODO Auto-generated constructor stub
 	}
 
-	public Todo(int id, String user, String desc, Date targetDate, boolean isDone) {
+	public Todo(int id, String user, String description, Date targetDate, boolean isDone) {
 		super();
 		this.id = id;
 		this.user = user;
-		this.desc = desc;
+		this.description = description;
 		this.targetDate = targetDate;
 		this.isDone = isDone;
 	}
@@ -294,12 +317,12 @@ public class Todo {
 		this.user = user;
 	}
 
-	public String getDesc() {
-		return desc;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setDesc(String desc) {
-		this.desc = desc;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public Date getTargetDate() {
@@ -346,7 +369,7 @@ public class Todo {
 
 	@Override
 	public String toString() {
-		return String.format("Todo [id=%s, user=%s, desc=%s, targetDate=%s, isDone=%s]", id, user, desc, targetDate,
+		return String.format("Todo [id=%s, user=%s, description=%s, targetDate=%s, isDone=%s]", id, user, description, targetDate,
 				isDone);
 	}
 
@@ -427,7 +450,23 @@ public class TodoService {
     }
 }
 ```
+Snippet -  com.cmabdullah.springBoot20.service
 
+# TodoRepository.java
+```java
+package com.cmabdullah.springBoot20.service;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.cmabdullah.springBoot20.model.Todo;
+
+public interface TodoRepository extends JpaRepository<Todo, Integer>{
+	List<Todo> findByUser(String user);
+}
+
+```
 Snippet -  com.cmabdullah.springBoot20.security
 
 # SecurityConfiguration.java
@@ -460,25 +499,55 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 	@Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-        .antMatchers("/login")
+        .antMatchers("/login", "/h2-console/**")
         .permitAll()
         .antMatchers("/", "/*todo*/**")
         .access("hasRole('USER')")
         .and()
         .formLogin();
+        
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
     }
 }
+
+
 ```
 
+Snippet -  /springBoot2-0/src/main/java
 
+# data.sql
+```sql
+insert into todo
+values (10001, 'lets learn coding', false, sysdate(), 'cmaa');
+insert into todo
+values (10002, 'lets learn JAVA', false, sysdate(), 'cmaa');
+insert into todo
+values (10003, 'lets learn JS', false, sysdate(), 'cmaa');
+insert into todo
+values (10004, 'lets learn Spring', false, sysdate(), 'cmaa');
+
+
+```
 
 Snippet -  /springBoot2-0/src/main/resources
 
 # application.properties
 ```properties
-    logging.level.org.springframework.web: DEBUG
-    spring.mvc.view.prefix: /WEB-INF/jsp/
-    spring.mvc.view.suffix: .jsp
+		logging.level.org.springframework.web: INFO
+
+		spring.mvc.view.prefix: /WEB-INF/jsp/
+		spring.mvc.view.suffix: .jsp
+		spring.jpa.show-sql=true
+		spring.h2.console.enabled=true
+
+
+		spring.jpa.hibernate.ddl-auto=none
+		spring.datasource.url=jdbc:mysql://localhost:3306/todo_example?useSSL=false
+		spring.datasource.username=root
+		spring.datasource.password=rootcm
+
+		spring.jpa.properties.hibernate.id.new_generator_mappings=false
 ```
 #
 ```java
@@ -594,7 +663,7 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 			<tbody>
 				<c:forEach items="${todos }" var="todo">
 					<tr>
-						<td>${todo.desc}</td>
+						<td>${todo.description}</td>
 						<td><fmt:formatDate value="${todo.targetDate}" pattern="dd/MM/yyyy"/></td>
 						<td>${todo.done}</td>
 						<td><a type="button" class="btn btn-success"
@@ -605,7 +674,6 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 				</c:forEach>
 			</tbody>
 		</table>
-		
 		<div>
 			<a class="button" href="/add-todo">Add a Todo</a>
 		</div>
@@ -620,19 +688,17 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 		<form:form method="post" modelAttribute="todo">
 			<form:hidden path="id" />
 			<fieldset class="form-group">
-				<form:label path="desc">Description</form:label>
-				<form:input name="desc" path="desc" type="text" class="form-control"
+				<form:label path="description">Description</form:label>
+				<form:input name="description" path="description" type="text" class="form-control"
 					required="required" />
-				<form:errors path="desc" cssClass="text-warning" />
+				<form:errors path="description" cssClass="text-warning" />
 			</fieldset>
-
 			<fieldset class="form-group">
 				<form:label path="targetDate">Target Date</form:label>
 				<form:input path="targetDate" type="text" class="form-control"
 					required="required" />
 				<form:errors path="targetDate" cssClass="text-warning" />
 			</fieldset>
-
 			<button type="submit" class="btn btn-success">Add</button>
 		</form:form>
 </div>

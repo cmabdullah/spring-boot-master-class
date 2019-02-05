@@ -1,4 +1,4 @@
-# Goal ->  Exception Handling
+# Goal ->  100 Step 29 Insert Todo using JPA Repository
 # project name springBoot2-0
 > https://grokonez.com/spring-framework/perform-form-validation-spring-boot
 
@@ -7,6 +7,17 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 Snippet -   com.cmabdullah.springBoot20
@@ -89,6 +100,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.cmabdullah.springBoot20.model.Todo;
+import com.cmabdullah.springBoot20.service.TodoRepository;
 import com.cmabdullah.springBoot20.service.TodoService;
 @Controller
 //@SessionAttributes("name")
@@ -97,6 +109,8 @@ public class TodoController {
 	@Autowired
 	TodoService todoService;
 	
+	@Autowired
+	TodoRepository repository;
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		// Date - dd/MM/yyyy
@@ -146,7 +160,12 @@ public class TodoController {
 			return "todo";
 		}
 		
-		todoService.addTodo(getLoggedInUserName(model), todo.getDesc(), todo.getTargetDate(), false);
+		
+		//save databases
+		todo.setUser(getLoggedInUserName(model));
+		repository.save(todo);
+		
+		//todoService.addTodo(getLoggedInUserName(model), todo.getDesc(), todo.getTargetDate(), false);
 		return "redirect:/list-todos";
 	}
 	
@@ -427,7 +446,23 @@ public class TodoService {
     }
 }
 ```
+Snippet -  com.cmabdullah.springBoot20.service
 
+# TodoRepository.java
+```java
+package com.cmabdullah.springBoot20.service;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.cmabdullah.springBoot20.model.Todo;
+
+public interface TodoRepository extends JpaRepository<Todo, Integer>{
+	List<Todo> findByUser(String user);
+}
+
+```
 Snippet -  com.cmabdullah.springBoot20.security
 
 # SecurityConfiguration.java
@@ -460,14 +495,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 	@Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-        .antMatchers("/login")
+        .antMatchers("/login", "/h2-console/**")
         .permitAll()
         .antMatchers("/", "/*todo*/**")
         .access("hasRole('USER')")
         .and()
         .formLogin();
+        
+        http.csrf().disable();
+        http.headers().frameOptions().disable();
     }
 }
+
+
 ```
 
 
@@ -476,9 +516,12 @@ Snippet -  /springBoot2-0/src/main/resources
 
 # application.properties
 ```properties
-    logging.level.org.springframework.web: DEBUG
-    spring.mvc.view.prefix: /WEB-INF/jsp/
-    spring.mvc.view.suffix: .jsp
+	logging.level.org.springframework.web: INFO
+
+	spring.mvc.view.prefix: /WEB-INF/jsp/
+	spring.mvc.view.suffix: .jsp
+	spring.jpa.show-sql=true
+	spring.h2.console.enabled=true
 ```
 #
 ```java
@@ -605,7 +648,6 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 				</c:forEach>
 			</tbody>
 		</table>
-		
 		<div>
 			<a class="button" href="/add-todo">Add a Todo</a>
 		</div>
@@ -625,14 +667,12 @@ Snippet -  /springBoot2-0/src/main/webapp/WEB-INF/jsp
 					required="required" />
 				<form:errors path="desc" cssClass="text-warning" />
 			</fieldset>
-
 			<fieldset class="form-group">
 				<form:label path="targetDate">Target Date</form:label>
 				<form:input path="targetDate" type="text" class="form-control"
 					required="required" />
 				<form:errors path="targetDate" cssClass="text-warning" />
 			</fieldset>
-
 			<button type="submit" class="btn btn-success">Add</button>
 		</form:form>
 </div>
